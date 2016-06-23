@@ -258,7 +258,7 @@ namespace decrypter_poc
 
             decryptedArray = tryDecrypt(filePath, startTicks, mBuffer);
 
-            if (decryptedArray != null)
+            if (decryptedArray != null && correctTick != 0)
             {
                 Console.WriteLine("\nSuccesfully decrypted file. Writing to disk.");
                 Console.WriteLine("Seed value: {0}", correctTick);
