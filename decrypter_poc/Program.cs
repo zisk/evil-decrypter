@@ -93,15 +93,15 @@ namespace decrypter_poc
 
         static byte[] saltBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-        public static byte[] tryDecrypt(string file, int startSeed)
+        public static byte[] tryDecrypt(string file, int startSeed, int buffer)
         {
             byte[] fileBytes = File.ReadAllBytes(file);
 
-            // Subtract 5 minutes from begining in case boot time is off
-            int startOffset = startSeed - 100;
+            // set begining buffer
+            int startOffset = startSeed - buffer;
 
-            // add 5 minutes of miliseconds to end
-            int endSeed = startSeed + 100;
+            // set end buffer
+            int endSeed = startSeed + buffer;
 
             int attemptTotal = (endSeed - startOffset) * 20;
             int attemptNumber = 0;
@@ -110,7 +110,7 @@ namespace decrypter_poc
 
             var stop = new System.Diagnostics.Stopwatch();
 
-
+            byte[] decryptedFile = new byte[0]; 
             stop.Start();
 
             int offsetAtDecrypted = 0;
@@ -140,17 +140,23 @@ namespace decrypter_poc
                             correctTick = seed;
                             offsetAtDecrypted = seed;
 
+                            decryptedFile = decrypted;
+
                             state.Break();
                             IsDecrypted = true;
 
                         }
 
                     }
-                    attemptNumber++;
+                    //attemptNumber++;
+                    //if ((attemptNumber / 1000) == 1)
+                    //{
+                    //    Console.Write("\rAttempt {0}/{1}", attemptNumber, attemptTotal);
+                    //}
 
                 });
 
-                //Console.Write("\rAttempt {0}/{1}", attemptNumber, attemptTotal);
+                
                 //Console.WriteLine("Exhausted Seed: {0} Length: {1}", seed, pwlength);
                 //});
 
@@ -162,9 +168,14 @@ namespace decrypter_poc
             }
                 stop.Stop();
                 Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
-                Console.ReadLine();
+                // Console.ReadLine();
+            if (decryptedFile != null)
+            {
+                return decryptedFile;
+            } else
+            {
                 return null;
-            
+            }
         }
         public static void writeDecryptedFile(string cryptedFile, byte[] decryptedBytes)
         {
@@ -198,6 +209,7 @@ namespace decrypter_poc
             byte[] decryptedArray;
             string filePath;
             DateTime startDate;
+            int mBuffer;
 
             if (args.Length == 0)
             {
@@ -221,19 +233,30 @@ namespace decrypter_poc
                     startDate = Convert.ToDateTime(strStartDate);
                 }
 
-                
+                Console.WriteLine("Set time buffer (miliseconds)");
+                var strBuffer = Console.ReadLine();
+               
+
+                if (strBuffer == "")
+                {
+                    mBuffer = 1000;
+                } else
+                {
+                    mBuffer = Convert.ToInt32(strBuffer);
+                }
             }
             else
             {
                 filePath = args[0];
                 startDate = Convert.ToDateTime(args[1]);
+                mBuffer = Convert.ToInt32(args[2]);
             }
 
             int startTicks = getTicks(startDate, filePath);
 
             Console.WriteLine("Attempting decryption...");
 
-            decryptedArray = tryDecrypt(filePath, startTicks);
+            decryptedArray = tryDecrypt(filePath, startTicks, mBuffer);
 
             if (decryptedArray != null)
             {
