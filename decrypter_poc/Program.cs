@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.IO;
 using System.Diagnostics;
+using CommandLine;
+using CommandLine.Text;
 
 namespace decrypter_poc
 {
@@ -214,50 +216,76 @@ namespace decrypter_poc
         static void Main(string[] args)
         {
             byte[] decryptedArray;
-            string filePath;
-            DateTime startDate;
-            int mBuffer;
+            string filePath = "";
+            DateTime startDate = DateTime.MinValue;
+            int mBuffer = 0;
 
-            if (args.Length == 0)
+            var options = new Options();
+            
+            if ((Parser.Default.ParseArguments(args, options)))
             {
-                Console.WriteLine("Enter full path of encrypted file:");
-                filePath = Console.ReadLine();
-
-                if (filePath == "")
+                filePath = options.cryptedFilePath;
+                try
                 {
-                    filePath = @"K:\Temp\Mike Young\googlelogo.png.evil";
+                    startDate = Convert.ToDateTime(options.bootDate);
                 }
-
-                Console.WriteLine("Enter boot date:");
-
-                var strStartDate = Console.ReadLine();
-
-                if (strStartDate == "")
+                catch (FormatException)
                 {
-                    startDate = Convert.ToDateTime(@"6/22/2016 8:41:18 AM");
-                } else
-                {
-                    startDate = Convert.ToDateTime(strStartDate);
+                    Console.WriteLine("Unable to parse date");
+                    Environment.Exit(1);
                 }
-
-                Console.WriteLine("Set time buffer (miliseconds)");
-                var strBuffer = Console.ReadLine();
-               
-
-                if (strBuffer == "")
-                {
-                    mBuffer = 1000;
-                } else
-                {
-                    mBuffer = Convert.ToInt32(strBuffer);
-                }
-            }
+                
+                mBuffer = Convert.ToInt32(options.buffer);
+            }   
             else
             {
-                filePath = args[0];
-                startDate = Convert.ToDateTime(args[1]);
-                mBuffer = Convert.ToInt32(args[2]);
-            }
+                //Console.WriteLine(options.GetUsage());
+                Environment.Exit(2);
+
+            }        
+
+            //if (args.Length == 0)
+            //{
+            //    Console.WriteLine("Enter full path of encrypted file:");
+            //    filePath = Console.ReadLine();
+
+            //    if (filePath == "")
+            //    {
+            //        filePath = @"K:\Temp\Mike Young\googlelogo.png.evil";
+            //    }
+
+            //    Console.WriteLine("Enter boot date:");
+
+            //    var strStartDate = Console.ReadLine();
+
+            //    if (strStartDate == "")
+            //    {
+            //        startDate = Convert.ToDateTime(@"6/22/2016 8:41:18 AM");
+            //    }
+            //    else
+            //    {
+            //        startDate = Convert.ToDateTime(strStartDate);
+            //    }
+
+            //    Console.WriteLine("Set time buffer (miliseconds)");
+            //    var strBuffer = Console.ReadLine();
+               
+
+            //    if (strBuffer == "")
+            //    {
+            //        mBuffer = 1000;
+            //    }
+            //    else
+            //    {
+            //        mBuffer = Convert.ToInt32(strBuffer);
+            //    }
+            //}
+            //else
+            //{
+            //    filePath = args[0];
+            //    startDate = Convert.ToDateTime(args[1]);
+            //    mBuffer = Convert.ToInt32(args[2]);
+            //}
 
             int startTicks = getTicks(startDate, filePath);
 
