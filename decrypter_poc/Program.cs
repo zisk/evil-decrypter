@@ -142,7 +142,7 @@ namespace decrypter_poc
 
                     if (decrypted != null)
                     {
-                        if (checkPNG(decrypted))
+                        if (Validate.checkValid(decrypted, file))
                         {
                             correctTick = seed;
                             offsetAtDecrypted = seed;
