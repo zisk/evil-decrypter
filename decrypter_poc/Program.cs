@@ -45,6 +45,13 @@ namespace decrypter_poc
                 Mode = CipherMode.CBC
             };
 
+            //AesManaged AES = new AesManaged
+            //{
+            //    KeySize = 256,
+            //    BlockSize = 128,
+            //    Mode = CipherMode.CBC
+
+            //};
 
             int keyBytes = AES.KeySize / 8;
             int ivBytes = AES.BlockSize / 8;
