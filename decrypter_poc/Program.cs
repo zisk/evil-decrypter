@@ -213,7 +213,7 @@ namespace decrypter_poc
             return actualBoot;
         }
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             byte[] decryptedArray;
             string filePath = "";
@@ -232,7 +232,7 @@ namespace decrypter_poc
                 catch (FormatException)
                 {
                     Console.WriteLine("Unable to parse date");
-                    Environment.Exit(1);
+                   return 1;
                 }
                 
                 mBuffer = Convert.ToInt32(options.buffer);
@@ -240,7 +240,7 @@ namespace decrypter_poc
             else
             {
                 //Console.WriteLine(options.GetUsage());
-                Environment.Exit(2);
+                return 2;
 
             }        
 
@@ -301,10 +301,12 @@ namespace decrypter_poc
                 Console.WriteLine("Machine Boot Time: {0}", calcDate);
 
                 writeDecryptedFile(filePath, decryptedArray);
+                return 0;
             }
             else 
             {
                 Console.WriteLine("\nFailed to decrypt file!");
+                return 0;
             }
         }
     }
