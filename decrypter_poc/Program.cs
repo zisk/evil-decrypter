@@ -15,25 +15,7 @@ namespace decrypter_poc
     {
         static int correctTick;
 
-        // PNG magic byte header
-        static byte[] PNG_MAGIC_BYTES = new byte[8] { 137, 80, 78, 71, 13, 10, 26, 10 };
-
-        static bool checkPNG (byte[] decryptedBytes)
-        {
-            byte[] headerArray = new byte[8];
-
-            Array.Copy(decryptedBytes, headerArray, 8);
-
-            if (headerArray.SequenceEqual(PNG_MAGIC_BYTES))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
+        static IEnumerable<int> pwLengths = Enumerable.Range(30, 20);
 
 
         static public byte[] AES_Decrypt(byte[] bytesToBeDecrypted, byte[] passwordBytes, byte[] saltBytes)
@@ -102,20 +84,12 @@ namespace decrypter_poc
 
         static byte[] saltBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-        public static byte[] tryDecrypt(string file, int startSeed, int buffer)
+        public static byte[] tryDecrypt(string file, int startSeed, int endseed)
         {
             byte[] fileBytes = File.ReadAllBytes(file);
 
-            // set begining buffer
-            int startOffset = startSeed - buffer;
-
-            // set end buffer
-            int endSeed = startSeed + buffer;
-
-            int attemptTotal = (endSeed - startOffset) * 20;
-            int attemptNumber = 0;
-
-            IEnumerable<int> pwLengths = Enumerable.Range(30, 20);
+            //int attemptTotal = (endSeed - startOffset) * 20;
+            //int attemptNumber = 0;
 
             var stop = new System.Diagnostics.Stopwatch();
 
@@ -125,12 +99,8 @@ namespace decrypter_poc
             int offsetAtDecrypted = 0;
             var IsDecrypted = false;
 
-            for (int seed = startOffset; seed < endSeed; seed++)
+            for (int seed = startSeed; seed < endseed; seed++)
             {
-                //start password length at 30, loop until 50
-
-                //for (int pwlength = 30; pwlength < 50; pwlength++)
-
 
                 Parallel.ForEach(pwLengths, (pwlength, state) =>
                 {
@@ -157,11 +127,6 @@ namespace decrypter_poc
                         }
 
                     }
-                    //attemptNumber++;
-                    //if ((attemptNumber / 1000) == 1)
-                    //{
-                    //    Console.Write("\rAttempt {0}/{1}", attemptNumber, attemptTotal);
-                    //}
 
                 });
 
@@ -177,7 +142,7 @@ namespace decrypter_poc
             }
                 stop.Stop();
                 Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
-                // Console.ReadLine();
+
             if (decryptedFile != null)
             {
                 return decryptedFile;
@@ -218,7 +183,8 @@ namespace decrypter_poc
             byte[] decryptedArray;
             string filePath = "";
             DateTime startDate = DateTime.MinValue;
-            int mBuffer = 0;
+            int startSeed = 0;
+            int endSeed = 0;
 
             var options = new Options();
             
@@ -231,11 +197,28 @@ namespace decrypter_poc
                 }
                 catch (FormatException)
                 {
-                    Console.WriteLine("Unable to parse date");
+                    Console.WriteLine("Error: Unable to parse date");
                    return 1;
                 }
-                
-                mBuffer = Convert.ToInt32(options.buffer);
+
+                if (options.buffer != 0)
+                {
+                    int fileTicks = getTicks(startDate, filePath);
+                    startSeed = fileTicks - options.buffer;
+                    endSeed = fileTicks + options.buffer;
+
+                }
+                else if (options.start > 0 && options.range > 0)
+                {
+                    startSeed = options.start;
+                    endSeed = options.start + options.range;
+                }
+                else
+                {
+                    Console.WriteLine("Error: Invalid options specified");
+                    return 2;
+                }
+
             }   
             else
             {
@@ -245,15 +228,11 @@ namespace decrypter_poc
             }        
 
 
-            int startTicks = getTicks(startDate, filePath);
-
-            Console.WriteLine("Attempting decryption...");
-
-            decryptedArray = tryDecrypt(filePath, startTicks, mBuffer);
+            decryptedArray = tryDecrypt(filePath, startSeed, endSeed);
 
             if (decryptedArray != null && correctTick != 0)
             {
-                Console.WriteLine("\nSuccesfully decrypted file. Writing to disk.");
+                Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
                 Console.WriteLine("Seed value: {0}", correctTick);
                 DateTime calcDate = calcActualBoot(filePath, correctTick);
                 Console.WriteLine("Machine Boot Time: {0}", calcDate);

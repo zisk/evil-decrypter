@@ -16,9 +16,15 @@ namespace decrypter_poc
         [Option('f', "file", Required = true, HelpText = "Full path to file to be decrypted")]
         public string cryptedFilePath { get; set; }
 
-        [Option('b', "buffer", Required = true, 
+        [Option('b', "buffer",
             HelpText = "Millisecond buffer to add on either side of time")]
         public int buffer { get; set; }
+
+        [Option('r', "range", HelpText = "Offset of for begining tick")]
+        public int range { get; set; }
+
+        [Option('s', "stattick", HelpText = "Milisecond count to start on")]
+        public int start { get; set; }
 
         [HelpOption]
         public string GetUsage()
