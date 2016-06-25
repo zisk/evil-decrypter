@@ -123,16 +123,13 @@ namespace decrypter_poc
 
                             state.Break();
                             IsDecrypted = true;
-
                         }
-
                     }
-
                 });
 
                 
                 //Console.WriteLine("Exhausted Seed: {0} Length: {1}", seed, pwlength);
-                //});
+                
 
                 if (IsDecrypted)
                     {
@@ -185,11 +182,18 @@ namespace decrypter_poc
             DateTime startDate = DateTime.MinValue;
             int startSeed = 0;
             int endSeed = 0;
+            bool multi = false;
 
-            var options = new Options();
-            
-            if ((Parser.Default.ParseArguments(args, options)))
+            //var options = new Options();
+
+            var result = Parser.Default.ParseArguments<Options>(args);          
+
+
+            if (result.Tag == ParserResultType.Parsed)
             {
+                var parsed = (Parsed<Options>)result;
+                var options = parsed.Value;
+
                 filePath = options.cryptedFilePath;
                 try
                 {
@@ -219,9 +223,15 @@ namespace decrypter_poc
                     return 2;
                 }
 
+                if (options.multi)
+                {
+                    multi = true;
+                }
+
             }   
             else
             {
+                var failedParse = (NotParsed<Options>)result;                
                 //Console.WriteLine(options.GetUsage());
                 return 2;
 
