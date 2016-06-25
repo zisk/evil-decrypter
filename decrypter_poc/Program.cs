@@ -244,48 +244,6 @@ namespace decrypter_poc
 
             }        
 
-            //if (args.Length == 0)
-            //{
-            //    Console.WriteLine("Enter full path of encrypted file:");
-            //    filePath = Console.ReadLine();
-
-            //    if (filePath == "")
-            //    {
-            //        filePath = @"K:\Temp\Mike Young\googlelogo.png.evil";
-            //    }
-
-            //    Console.WriteLine("Enter boot date:");
-
-            //    var strStartDate = Console.ReadLine();
-
-            //    if (strStartDate == "")
-            //    {
-            //        startDate = Convert.ToDateTime(@"6/22/2016 8:41:18 AM");
-            //    }
-            //    else
-            //    {
-            //        startDate = Convert.ToDateTime(strStartDate);
-            //    }
-
-            //    Console.WriteLine("Set time buffer (miliseconds)");
-            //    var strBuffer = Console.ReadLine();
-               
-
-            //    if (strBuffer == "")
-            //    {
-            //        mBuffer = 1000;
-            //    }
-            //    else
-            //    {
-            //        mBuffer = Convert.ToInt32(strBuffer);
-            //    }
-            //}
-            //else
-            //{
-            //    filePath = args[0];
-            //    startDate = Convert.ToDateTime(args[1]);
-            //    mBuffer = Convert.ToInt32(args[2]);
-            //}
 
             int startTicks = getTicks(startDate, filePath);
 
