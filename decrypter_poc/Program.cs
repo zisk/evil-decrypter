@@ -132,8 +132,6 @@ namespace decrypter_poc
                         break;
                     }
 
-                    stop.Stop();
-                    Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
                 }
                 else
                 {
@@ -159,6 +157,9 @@ namespace decrypter_poc
                     }
                 }
             }
+
+            stop.Stop();
+            Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
 
             if (decryptedFile != null)
             {
