@@ -18,9 +18,9 @@ namespace decrypter_poc
         static byte[] xlsxHeader = new byte[5] { 80, 75, 3, 4, 20 };
 
 
-        public static bool checkValid(byte[] fileDecrypt, string orgFile)
+        public static bool checkValid(byte[] fileDecrypt, FileInfo orgFile)
         {
-            string[] fileSplit = new FileInfo(orgFile).Name.Split('.');
+            string[] fileSplit = orgFile.Name.Split('.');
             string ext = fileSplit[fileSplit.Length - 2];
 
             switch (ext)

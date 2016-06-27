@@ -9,6 +9,7 @@ using System.Diagnostics;
 using CommandLine;
 using CommandLine.Text;
 
+
 namespace decrypter_poc
 {
     class Program
@@ -84,20 +85,20 @@ namespace decrypter_poc
 
         static byte[] saltBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 
-        public static byte[] tryDecrypt(string file, int startSeed, int endseed, bool threading)
+        public static bool tryDecrypt(EncryptedFile file, int startSeed, int endseed, bool threading)
         {
-            byte[] fileBytes = File.ReadAllBytes(file);
+            //byte[] fileBytes = File.ReadAllBytes(file);
 
             //int attemptTotal = (endSeed - startOffset) * 20;
             //int attemptNumber = 0;
 
             var stop = new System.Diagnostics.Stopwatch();
 
-            byte[] decryptedFile = new byte[0];
+            //byte[] decryptedFile = new byte[0];
             stop.Start();
 
-            int offsetAtDecrypted = 0;
-            var IsDecrypted = false;
+            //int offsetAtDecrypted = 0;
+            //var IsDecrypted = false;
 
             for (int seed = endseed; seed > startSeed; seed--)
             {
@@ -108,18 +109,24 @@ namespace decrypter_poc
                         string pass = GetPass(pwlength, seed);
                         // orginal ransomware appears to use a hash of the password rather than the real password
                         byte[] passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
-                        byte[] decrypted = AES_Decrypt(fileBytes, passBytes, saltBytes);
+                        byte[] decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
 
                         if (decrypted != null)
                         {
-                            if (Validate.checkValid(decrypted, file))
+                            if (Validate.checkValid(decrypted, file.file))
                             {
-                                correctTick = seed;
-                                offsetAtDecrypted = seed;
+                                //correctTick = seed;
+                                //offsetAtDecrypted = seed;
 
-                                decryptedFile = decrypted;
+                                //decryptedFile = decrypted;
 
-                                IsDecrypted = true;
+                                file.seed = seed;
+                                file.decryptedFilebyte = decrypted;
+                                file.setPassword(passBytes);
+
+                                //IsDecrypted = true;
+
+                                file.decrypted = true;
                                 state.Break();
 
                             }
@@ -127,7 +134,7 @@ namespace decrypter_poc
                     });
 
                     //Console.WriteLine("Exhausted Seed: {0} Length: {1}", seed, pwlength);               
-                    if (IsDecrypted)
+                    if (file.decrypted)
                     {
                         break;
                     }
@@ -140,18 +147,23 @@ namespace decrypter_poc
                         string pass = GetPass(pwlength, seed);
                         // orginal ransomware appears to use a hash of the password rather than the real password
                         byte[] passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
-                        byte[] decrypted = AES_Decrypt(fileBytes, passBytes, saltBytes);
+                        byte[] decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
 
                         if (decrypted != null)
                         {
-                            if (Validate.checkValid(decrypted, file))
+                            if (Validate.checkValid(decrypted, file.file))
                             {
-                                correctTick = seed;
-                                offsetAtDecrypted = seed;
+                                //correctTick = seed;
+                                //offsetAtDecrypted = seed;
 
-                                decryptedFile = decrypted;
-                                IsDecrypted = true;
-                                return decrypted;
+                                file.decrypted = true;
+                                file.seed = seed;
+                                file.decryptedFilebyte = decrypted;
+                                file.setPassword(passBytes);
+
+                                //decryptedFile = decrypted;
+                                //IsDecrypted = true;
+                                return true;
                             }
                         }
                     }
@@ -161,12 +173,12 @@ namespace decrypter_poc
             stop.Stop();
             ///Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
 
-            if (decryptedFile != null)
+            if (file.decryptedFilebyte != null)
             {
-                return decryptedFile;
+                return true;
             } else
             {
-                return null;
+                return false;
             }
         }
 
@@ -206,13 +218,14 @@ namespace decrypter_poc
 
         static int Main(string[] args)
         {
-            byte[] decryptedArray;
+            //byte[] decryptedArray;
             string filePath = "";
             DateTime startDate = DateTime.MinValue;
             int startSeed = 0;
             int endSeed = 0;
             bool multi = false;
             int fileTicks;
+            EncryptedFile cryptFile;
 
             var result = Parser.Default.ParseArguments<Options>(args);          
 
@@ -235,6 +248,8 @@ namespace decrypter_poc
                    return 1;
                 }
 
+                cryptFile = new EncryptedFile(filePath);
+
                 fileTicks = getTicks(startDate, filePath);
 
                 startSeed = (fileTicks - options.offset) - options.buffer;
@@ -252,7 +267,7 @@ namespace decrypter_poc
                 //Console.WriteLine(options.GetUsage());
                 return 2;
 
-            }
+            }            
 
             if (startSeed == 0 || endSeed == 0)
             {
@@ -261,16 +276,19 @@ namespace decrypter_poc
             }
 
 
-            decryptedArray = tryDecrypt(filePath, startSeed, endSeed, multi);
+            //decryptedArray = tryDecrypt(cryptFile, startSeed, endSeed, multi);
+
+            bool decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi);
 
 
-            if (decryptedArray != null && correctTick != 0)
+            if (decryptResult && cryptFile.seed != 0)
             {
                 Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
-                Console.WriteLine("Seed value: {0}", correctTick);
-                Console.WriteLine("Seed value was off by {0} milliseconds!", calDiff(fileTicks, correctTick));
+                Console.WriteLine("Password: {0}", cryptFile.password);
+                Console.WriteLine("Seed value: {0}", cryptFile.seed);
+                Console.WriteLine("Seed value was off by {0} milliseconds!", calDiff(fileTicks, cryptFile.seed));
 
-                writeDecryptedFile(filePath, decryptedArray);
+                writeDecryptedFile(filePath, cryptFile.decryptedFilebyte);               
                 return 0;
             }
             else 
