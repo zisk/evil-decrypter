@@ -169,21 +169,30 @@ namespace decrypter_poc
                 return null;
             }
         }
+
         public static void writeDecryptedFile(string cryptedFile, byte[] decryptedBytes)
         {
             // create directory
             DirectoryInfo decryptedDir = Directory.CreateDirectory(Path.GetDirectoryName(cryptedFile) + @"\decrypted");
             string cleanFile = Path.Combine(decryptedDir.FullName, Path.GetFileName(cryptedFile.Replace(".evil", "")));
-            File.WriteAllBytes(cleanFile ,decryptedBytes);
+            try
+            {
+                File.WriteAllBytes(cleanFile, decryptedBytes);
+            }
+            catch (System.UnauthorizedAccessException)
+            {
+                Console.WriteLine("Unable to write decrypted file to disk. Access was denied to path.");
+            }
         }
 
         public static int getTicks(DateTime bootDate, string decryptFile)
         {
             DateTime lastWrite = File.GetLastWriteTime(decryptFile);
-
             TimeSpan dateDiff = lastWrite - bootDate;
-
             var currentTick = Convert.ToInt32(dateDiff.TotalMilliseconds);
+
+            // add 1000 milisecond to the start to account for lack of precision in last write
+            currentTick += 1000;                       
 
             return currentTick;
         }
@@ -204,8 +213,7 @@ namespace decrypter_poc
             int startSeed = 0;
             int endSeed = 0;
             bool multi = false;
-
-            //var options = new Options();
+            int fileTicks;
 
             var result = Parser.Default.ParseArguments<Options>(args);          
 
@@ -216,6 +224,8 @@ namespace decrypter_poc
                 var options = parsed.Value;
 
                 filePath = options.cryptedFilePath;
+                
+
                 try
                 {
                     startDate = Convert.ToDateTime(options.bootDate);
@@ -226,23 +236,10 @@ namespace decrypter_poc
                    return 1;
                 }
 
-                if (options.buffer != 0)
-                {
-                    int fileTicks = getTicks(startDate, filePath);
-                    startSeed = fileTicks - options.buffer;
-                    endSeed = fileTicks + options.buffer;
+                fileTicks = getTicks(startDate, filePath);
 
-                }
-                else if (options.start > 0 && options.range > 0)
-                {
-                    startSeed = options.start;
-                    endSeed = options.start + options.range;
-                }
-                else
-                {
-                    Console.WriteLine("Error: Invalid options specified");
-                    return 2;
-                }
+                startSeed = fileTicks - options.buffer - options.offset;
+                endSeed = fileTicks + options.offset - options.offset;
 
                 if (options.multi)
                 {
@@ -265,8 +262,7 @@ namespace decrypter_poc
             {
                 Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
                 Console.WriteLine("Seed value: {0}", correctTick);
-                DateTime calcDate = calcActualBoot(filePath, correctTick);
-                Console.WriteLine("Machine Boot Time: {0}", calcDate);
+
 
                 writeDecryptedFile(filePath, decryptedArray);
                 return 0;
