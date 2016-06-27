@@ -197,11 +197,10 @@ namespace decrypter_poc
             return currentTick;
         }
 
-        public static int calDiff (int intialEndSeed, int foundSeed)
+        public static int calDiff(int intialEndSeed, int foundSeed)
         {
-            var caledDiffMil = (intialEndSeed - 1000) - foundSeed;
-            int caledDiffSec = caledDiffMil / 1000;
-            return caledDiffSec;
+            return (intialEndSeed - 1000) - foundSeed;
+
         }
 
 
@@ -262,7 +261,7 @@ namespace decrypter_poc
             {
                 Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
                 Console.WriteLine("Seed value: {0}", correctTick);
-                Console.WriteLine("Seed value was off by {0} seconds!", calDiff(fileTicks, correctTick));
+                Console.WriteLine("Seed value was off by {0} milliseconds!", calDiff(fileTicks, correctTick));
 
                 writeDecryptedFile(filePath, decryptedArray);
                 return 0;
