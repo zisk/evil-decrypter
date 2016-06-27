@@ -237,8 +237,8 @@ namespace decrypter_poc
 
                 fileTicks = getTicks(startDate, filePath);
 
-                startSeed = fileTicks - options.buffer - options.offset;
-                endSeed = fileTicks + options.offset - options.offset;
+                startSeed = (fileTicks - options.offset) - options.buffer;
+                endSeed = fileTicks - options.offset;
 
                 if (options.multi)
                 {
@@ -252,10 +252,17 @@ namespace decrypter_poc
                 //Console.WriteLine(options.GetUsage());
                 return 2;
 
-            }        
+            }
+
+            if (startSeed == 0 || endSeed == 0)
+            {
+                Console.WriteLine("Ran out of numbers!");
+                return 0;
+            }
 
 
             decryptedArray = tryDecrypt(filePath, startSeed, endSeed, multi);
+
 
             if (decryptedArray != null && correctTick != 0)
             {
