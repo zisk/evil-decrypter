@@ -93,13 +93,13 @@ namespace decrypter_poc
 
             var stop = new System.Diagnostics.Stopwatch();
 
-            byte[] decryptedFile = new byte[0]; 
+            byte[] decryptedFile = new byte[0];
             stop.Start();
 
             int offsetAtDecrypted = 0;
             var IsDecrypted = false;
 
-            for (int seed = startSeed; seed < endseed; seed++)
+            for (int seed = endseed; seed > startSeed; seed--)
             {
                 if (threading)
                 {
@@ -159,7 +159,7 @@ namespace decrypter_poc
             }
 
             stop.Stop();
-            Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
+            ///Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
 
             if (decryptedFile != null)
             {
@@ -192,18 +192,18 @@ namespace decrypter_poc
             var currentTick = Convert.ToInt32(dateDiff.TotalMilliseconds);
 
             // add 1000 milisecond to the start to account for lack of precision in last write
-            currentTick += 1000;                       
+            currentTick += 1000;
 
             return currentTick;
         }
 
-        public static DateTime calcActualBoot(string cryptedfile, int foundSeed)
+        public static int calDiff (int intialEndSeed, int foundSeed)
         {
-            DateTime fileLastWrite = File.GetLastWriteTime(cryptedfile);
-            TimeSpan seedConvert = TimeSpan.FromMilliseconds(foundSeed);
-            DateTime actualBoot = fileLastWrite.Subtract(seedConvert);
-            return actualBoot;
+            var caledDiffMil = (intialEndSeed - 1000) - foundSeed;
+            int caledDiffSec = caledDiffMil / 1000;
+            return caledDiffSec;
         }
+
 
         static int Main(string[] args)
         {
@@ -262,7 +262,7 @@ namespace decrypter_poc
             {
                 Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
                 Console.WriteLine("Seed value: {0}", correctTick);
-
+                Console.WriteLine("Seed value was off by {0} seconds!", calDiff(fileTicks, correctTick));
 
                 writeDecryptedFile(filePath, decryptedArray);
                 return 0;
