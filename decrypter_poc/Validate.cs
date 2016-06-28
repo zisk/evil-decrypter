@@ -14,8 +14,10 @@ namespace decrypter_poc
         // png header bytes
         static byte[] PNG_MAGIC_BYTES = new byte[8] { 137, 80, 78, 71, 13, 10, 26, 10 };
 
-        // xlsx header bytes
-        static byte[] xlsxHeader = new byte[5] { 80, 75, 3, 4, 20 };
+        // officex header bytes
+        static byte[] officexHeader = new byte[5] { 80, 75, 3, 4, 20 };
+
+        static byte[] pdfHeader = new byte[] {37, 80, 68, 70, 45 };
 
 
         public static bool checkValid(byte[] fileDecrypt, FileInfo orgFile)
@@ -26,9 +28,14 @@ namespace decrypter_poc
             switch (ext)
             {
                 case "xlsx":
-                    return confirmValid(fileDecrypt, xlsxHeader);
+                case "docx":
+                case "pptx":
+                case "vdsx":
+                    return confirmValid(fileDecrypt, officexHeader);
                 case "png":
                     return confirmValid(fileDecrypt, PNG_MAGIC_BYTES);
+                case "pdf":
+                    return confirmValid(fileDecrypt, pdfHeader);
                 default:
                     return false;
             }
