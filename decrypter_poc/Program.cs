@@ -8,7 +8,7 @@ using System.IO;
 using System.Diagnostics;
 using CommandLine;
 using CommandLine.Text;
-
+using Newtonsoft.Json;
 
 namespace decrypter_poc
 {
@@ -187,14 +187,7 @@ namespace decrypter_poc
             // create directory
             DirectoryInfo decryptedDir = Directory.CreateDirectory(Path.GetDirectoryName(cryptedFile) + @"\decrypted");
             string cleanFile = Path.Combine(decryptedDir.FullName, Path.GetFileName(cryptedFile.Replace(".evil", "")));
-            try
-            {
-                File.WriteAllBytes(cleanFile, decryptedBytes);
-            }
-            catch (System.UnauthorizedAccessException)
-            {
-                Console.WriteLine("Unable to write decrypted file to disk. Access was denied to path.");
-            }
+            File.WriteAllBytes(cleanFile, decryptedBytes);
         }
 
         public static int getTicks(DateTime bootDate, string decryptFile)
@@ -225,7 +218,13 @@ namespace decrypter_poc
             int endSeed = 0;
             bool multi = false;
             int fileTicks;
-            EncryptedFile cryptFile;
+            int buffer;
+            int offset;
+            string outdir;
+            bool verbose = false;
+            //EncryptedFile cryptFile;
+
+            List<EncryptedFile> encryptedFiles = new List<EncryptedFile>();
 
             var result = Parser.Default.ParseArguments<Options>(args);          
 
@@ -235,8 +234,50 @@ namespace decrypter_poc
                 var parsed = (Parsed<Options>)result;
                 var options = parsed.Value;
 
-                filePath = options.cryptedFilePath;
-                
+                if (options.verbose)
+                {
+                    verbose = true;
+                }
+
+                if (options.cryptedFilePath != null)
+                {
+                    filePath = options.cryptedFilePath;
+                    outdir = new FileInfo(filePath).Directory.ToString();
+                    encryptedFiles.Add(new EncryptedFile(options.cryptedFilePath));
+                }
+                else if (options.dir != null)
+                {
+
+                    if (Directory.Exists(options.dir))
+                    {
+                        outdir = options.dir;
+
+                        if (verbose)
+                        {
+                            Console.WriteLine("Scanning directory {0} for encrypted files", options.dir);
+                        }
+
+                        foreach (string file in Directory.EnumerateFiles(options.dir, "*.evil*"))
+                        {
+                            encryptedFiles.Add(new EncryptedFile(file));
+                        }
+
+                        if (verbose)
+                        {
+                            Console.WriteLine("Found {0} encrypted files.", encryptedFiles.Count);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Error: Invalid directory!");
+                        return 2;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Error: Either a file or directory must be specified");
+                    return 2;
+                }
 
                 try
                 {
@@ -248,16 +289,18 @@ namespace decrypter_poc
                    return 1;
                 }
 
-                cryptFile = new EncryptedFile(filePath);
+                //cryptFile = new EncryptedFile(filePath);
 
-                fileTicks = getTicks(startDate, filePath);
-
-                startSeed = (fileTicks - options.offset) - options.buffer;
-                endSeed = fileTicks - options.offset;
+                offset = options.offset;
+                buffer = options.buffer;
 
                 if (options.multi)
                 {
                     multi = true;
+                    if (verbose)
+                    {
+                        Console.WriteLine("Running in multithreaded mode");
+                    }
                 }
 
             }   
@@ -268,34 +311,63 @@ namespace decrypter_poc
                 return 2;
 
             }            
-
-            if (startSeed == 0 || endSeed == 0)
-            {
-                Console.WriteLine("Ran out of numbers!");
-                return 0;
-            }
-
+           
 
             //decryptedArray = tryDecrypt(cryptFile, startSeed, endSeed, multi);
 
-            bool decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi);
-
-
-            if (decryptResult && cryptFile.seed != 0)
+            foreach (EncryptedFile cryptFile in encryptedFiles)
             {
-                Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
-                Console.WriteLine("Password: {0}", cryptFile.password);
-                Console.WriteLine("Seed value: {0}", cryptFile.seed);
-                Console.WriteLine("Seed value was off by {0} milliseconds!", calDiff(fileTicks, cryptFile.seed));
+                fileTicks = getTicks(startDate, cryptFile.file.FullName);
 
-                writeDecryptedFile(filePath, cryptFile.decryptedFilebyte);               
-                return 0;
+                startSeed = (fileTicks - offset) - buffer;
+                endSeed = fileTicks - offset;
+
+                if (startSeed == 0 || endSeed == 0)
+                {
+                    Console.WriteLine("Ran out of numbers!");
+                    break;
+                }
+
+                cryptFile.loadBytes();
+
+                if (verbose)
+                {
+                    Console.WriteLine("Attmepting to decrypt: {0}", cryptFile.file.Name);
+                    Console.WriteLine("Starting at seed count {0}", startSeed);
+                }
+
+                bool decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi);
+
+
+                if (decryptResult && cryptFile.seed != 0)
+                {
+                    Console.WriteLine("\nSuccessfully decrypted file. Writing to disk.");
+                    Console.WriteLine("Password: {0}", cryptFile.password);
+                    Console.WriteLine("Seed value: {0}", cryptFile.seed);
+                    Console.WriteLine("Seed value was off by {0} milliseconds!", calDiff(fileTicks, cryptFile.seed));
+
+                    try
+                    {
+                        writeDecryptedFile(outdir, cryptFile.decryptedFilebyte);
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        Console.WriteLine("Error: Unable to write decrypted file to disk. Access was denied to path.");
+                    }
+                    //return 0;
+                }
+                else
+                {
+                    Console.WriteLine("\nFailed to decrypt file!");
+                    //return 0;
+                }
+                using (StreamWriter jfile = File.CreateText(outdir + @"\files.json"))
+                {
+                    JsonSerializer jserial = new JsonSerializer();
+                    jserial.Serialize(jfile, encryptedFiles);
+                }
             }
-            else 
-            {
-                Console.WriteLine("\nFailed to decrypt file!");
-                return 0;
-            }
+            return 0;
         }
     }
 }

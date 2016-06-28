@@ -10,8 +10,11 @@ namespace decrypter_poc
 {
     class Options
     {
-        [Option('f', "file", Required = true, HelpText = "Full path to file to be decrypted")]
+        [Option('f', "file", HelpText = "Full path to file to be decrypted")]
         public string cryptedFilePath { get; set; }
+
+        [Option("dir", HelpText ="Process all .evil files in directory")]
+        public string dir { get; set; }
 
         [Option('d', "date", Required = true, 
             HelpText = "Time of machine boot.")]
@@ -25,11 +28,15 @@ namespace decrypter_poc
             HelpText = "Offset of beginning tick")]
         public int offset { get; set; }
 
+        [Option('v', "verbose", HelpText = "Verbose output")]
+        public bool verbose { get; set; }
+
         [Option("single", HelpText = "Run single threaded. (Default)", Default = true)]
         public bool single { get; set; }
 
         [Option("multi", HelpText = "Run multi threaded.", Default = false)]
         public bool multi { get; set; }
+
 
         //[HelpOption]
         //public string GetUsage()

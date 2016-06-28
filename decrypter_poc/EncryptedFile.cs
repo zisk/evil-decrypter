@@ -15,7 +15,7 @@ namespace decrypter_poc
 
         public FileInfo file;
 
-        public byte[] cryptedFilebytes { get; }
+        public byte[] cryptedFilebytes { get; set; }
 
         public bool ShouldSerializecryptedFilebytes()
         {
@@ -47,6 +47,11 @@ namespace decrypter_poc
             return hashString.ToString();
         }
 
+        public void loadBytes()
+        {
+            cryptedFilebytes = File.ReadAllBytes(file.FullName);
+        }
+
         public void setPassword (byte[] passBytes)
         {
             password = shaToString(passBytes);
@@ -56,8 +61,7 @@ namespace decrypter_poc
         {
             file = new FileInfo(filePath);
 
-            cryptedhash = shaToString(File.ReadAllBytes(file.FullName));
-            cryptedFilebytes = File.ReadAllBytes(file.FullName);
+            cryptedhash = shaToString(File.ReadAllBytes(file.FullName));            
         }
     }
 }
