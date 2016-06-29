@@ -156,7 +156,7 @@ namespace decrypter_poc
                         var pass = GetPass(pwlength, seed);
                         // orginal ransomware appears to use a hash of the password rather than the real password
                         var passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
-                        var decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
+                        var decrypted = AES_UM_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
 
                         if (decrypted != null)
                         {
@@ -192,7 +192,7 @@ namespace decrypter_poc
                         var pass = GetPass(pwlength, seed);
                         // orginal ransomware appears to use a hash of the password rather than the real password
                         var passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
-                        var decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
+                        var decrypted = AES_UM_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
 
                         if (decrypted != null)
                         {
