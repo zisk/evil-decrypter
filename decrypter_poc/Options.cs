@@ -20,7 +20,7 @@ namespace decrypter_poc
             HelpText = "Time of machine boot.")]
         public string bootDate { get; set; }
 
-        [Option('b', "buffer", SetName = "buffer",
+        [Option('b', "buffer", Required = true, SetName = "buffer",
             HelpText = "Millisecond buffer to add on either side of time")]
         public int buffer { get; set; }
 
