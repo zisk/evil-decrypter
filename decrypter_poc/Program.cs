@@ -1,29 +1,81 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using System.IO;
-using System.Diagnostics;
 using CommandLine;
-using CommandLine.Text;
 using Newtonsoft.Json;
+
 
 namespace decrypter_poc
 {
-    class Program
+    internal class Program
     {
-        static int correctTick;
+        private static int correctTick;
 
-        static IEnumerable<int> pwLengths = Enumerable.Range(30, 20);
+        private static readonly IEnumerable<int> pwLengths = Enumerable.Range(30, 20);
+
+        private static readonly byte[] saltBytes = {1, 2, 3, 4, 5, 6, 7, 8};
 
 
-        static public byte[] AES_Decrypt(byte[] bytesToBeDecrypted, byte[] passwordBytes, byte[] saltBytes)
+        public static byte[] AES_UM_Decrypt(byte[] bytesToBeDecrypted, byte[] passwordBytes, byte[] saltBytes)
         {
             byte[] decryptedBytes = null;
 
-            RijndaelManaged AES = new RijndaelManaged
+
+            //AesManaged AES = new AesManaged
+            //{
+            //    KeySize = 256,
+            //    BlockSize = 128,
+            //    Mode = CipherMode.CBC
+
+            //};
+
+            using (var aes = new AesCryptoServiceProvider
+            {
+                KeySize = 256,
+                BlockSize = 128,
+                Mode = CipherMode.CBC
+            })
+            {
+                var keyBytes = aes.KeySize/8;
+                var ivBytes = aes.BlockSize/8;
+
+
+                try
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
+                        aes.Key = key.GetBytes(keyBytes);
+                        aes.IV = key.GetBytes(ivBytes);
+
+                        using (var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write))
+                        {
+                            cs.Write(bytesToBeDecrypted, 0, bytesToBeDecrypted.Length);
+                            cs.FlushFinalBlock();
+                            cs.Close();
+                        }
+                        decryptedBytes = ms.ToArray();
+                    }
+                }
+                catch (Exception e)
+                {
+                }
+
+                return decryptedBytes;
+            }
+        }
+
+
+        public static byte[] AES_Decrypt(byte[] bytesToBeDecrypted, byte[] passwordBytes, byte[] saltBytes)
+        {
+            byte[] decryptedBytes = null;
+
+            var AES = new RijndaelManaged
             {
                 KeySize = 256,
                 BlockSize = 128,
@@ -38,15 +90,14 @@ namespace decrypter_poc
 
             //};
 
-            int keyBytes = AES.KeySize / 8;
-            int ivBytes = AES.BlockSize / 8;
+            var keyBytes = AES.KeySize/8;
+            var ivBytes = AES.BlockSize/8;
 
 
             try
             {
-                using (MemoryStream ms = new MemoryStream())
+                using (var ms = new MemoryStream())
                 {
-
                     var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
                     AES.Key = key.GetBytes(keyBytes);
                     AES.IV = key.GetBytes(ivBytes);
@@ -58,12 +109,10 @@ namespace decrypter_poc
                         cs.Close();
                     }
                     decryptedBytes = ms.ToArray();
-
                 }
             }
             catch (Exception e)
             {
-
             }
 
             return decryptedBytes;
@@ -72,18 +121,16 @@ namespace decrypter_poc
 
         public static string GetPass(int x, int seed)
         {
-            string str = "";
-            Random random = new Random(seed);
+            var str = "";
+            var random = new Random(seed);
             while (str.Length < x)
             {
-                char c = (char)random.Next(33, 125);
+                var c = (char) random.Next(33, 125);
                 if (char.IsLetterOrDigit(c))
                     str += c;
             }
             return str;
         }
-
-        static byte[] saltBytes = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 
         public static bool tryDecrypt(EncryptedFile file, int startSeed, int endseed, bool threading)
         {
@@ -92,7 +139,7 @@ namespace decrypter_poc
             //int attemptTotal = (endSeed - startOffset) * 20;
             //int attemptNumber = 0;
 
-            var stop = new System.Diagnostics.Stopwatch();
+            var stop = new Stopwatch();
 
             //byte[] decryptedFile = new byte[0];
             stop.Start();
@@ -100,16 +147,16 @@ namespace decrypter_poc
             //int offsetAtDecrypted = 0;
             //var IsDecrypted = false;
 
-            for (int seed = endseed; seed > startSeed; seed--)
+            for (var seed = endseed; seed > startSeed; seed--)
             {
                 if (threading)
                 {
                     Parallel.ForEach(pwLengths, (pwlength, state) =>
                     {
-                        string pass = GetPass(pwlength, seed);
+                        var pass = GetPass(pwlength, seed);
                         // orginal ransomware appears to use a hash of the password rather than the real password
-                        byte[] passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
-                        byte[] decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
+                        var passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
+                        var decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
 
                         if (decrypted != null)
                         {
@@ -128,7 +175,6 @@ namespace decrypter_poc
 
                                 file.decrypted = true;
                                 state.Break();
-
                             }
                         }
                     });
@@ -138,16 +184,15 @@ namespace decrypter_poc
                     {
                         break;
                     }
-
                 }
                 else
                 {
-                    foreach (int pwlength in pwLengths)
+                    foreach (var pwlength in pwLengths)
                     {
-                        string pass = GetPass(pwlength, seed);
+                        var pass = GetPass(pwlength, seed);
                         // orginal ransomware appears to use a hash of the password rather than the real password
-                        byte[] passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
-                        byte[] decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
+                        var passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
+                        var decrypted = AES_Decrypt(file.cryptedFilebytes, passBytes, saltBytes);
 
                         if (decrypted != null)
                         {
@@ -171,29 +216,27 @@ namespace decrypter_poc
             }
 
             stop.Stop();
-            ///Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
+            // Console.WriteLine("{0} time Elastped, Decrypted seed value {1}", stop.Elapsed, offsetAtDecrypted);
 
             if (file.decryptedFilebyte != null)
             {
                 return true;
-            } else
-            {
-                return false;
             }
+            return false;
         }
 
         public static void writeDecryptedFile(string cryptedFile, byte[] decryptedBytes)
         {
             // create directory
-            DirectoryInfo decryptedDir = Directory.CreateDirectory(Path.GetDirectoryName(cryptedFile) + @"\decrypted");
-            string cleanFile = Path.Combine(decryptedDir.FullName, Path.GetFileName(cryptedFile.Replace(".evil", "")));
+            var decryptedDir = Directory.CreateDirectory(Path.GetDirectoryName(cryptedFile) + @"\decrypted");
+            var cleanFile = Path.Combine(decryptedDir.FullName, Path.GetFileName(cryptedFile.Replace(".evil", "")));
             File.WriteAllBytes(cleanFile, decryptedBytes);
         }
 
         public static int getTicks(DateTime bootDate, string decryptFile)
         {
-            DateTime lastWrite = File.GetLastWriteTime(decryptFile);
-            TimeSpan dateDiff = lastWrite - bootDate;
+            var lastWrite = File.GetLastWriteTime(decryptFile);
+            var dateDiff = lastWrite - bootDate;
             var currentTick = Convert.ToInt32(dateDiff.TotalMilliseconds);
 
             // add 1000 milisecond to the start to account for lack of precision in last write
@@ -204,34 +247,33 @@ namespace decrypter_poc
 
         public static int calDiff(int intialEndSeed, int foundSeed)
         {
-            return (intialEndSeed - 1000) - foundSeed;
-
+            return intialEndSeed - 1000 - foundSeed;
         }
 
 
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             //byte[] decryptedArray;
-            string filePath = "";
-            DateTime startDate = DateTime.MinValue;
-            int startSeed = 0;
-            int endSeed = 0;
-            bool multi = false;
+            var filePath = "";
+            var startDate = DateTime.MinValue;
+            var startSeed = 0;
+            var endSeed = 0;
+            var multi = false;
             int fileTicks;
             int buffer;
             int offset;
             string outdir;
-            bool verbose = false;
+            var verbose = false;
             //EncryptedFile cryptFile;
 
-            List<EncryptedFile> encryptedFiles = new List<EncryptedFile>();
+            var encryptedFiles = new List<EncryptedFile>();
 
-            var result = Parser.Default.ParseArguments<Options>(args);          
+            var result = Parser.Default.ParseArguments<Options>(args);
 
 
             if (result.Tag == ParserResultType.Parsed)
             {
-                var parsed = (Parsed<Options>)result;
+                var parsed = (Parsed<Options>) result;
                 var options = parsed.Value;
 
                 if (options.verbose)
@@ -247,7 +289,6 @@ namespace decrypter_poc
                 }
                 else if (options.dir != null)
                 {
-
                     if (Directory.Exists(options.dir))
                     {
                         outdir = options.dir;
@@ -257,7 +298,7 @@ namespace decrypter_poc
                             Console.WriteLine("Scanning directory {0} for encrypted files", options.dir);
                         }
 
-                        foreach (string file in Directory.EnumerateFiles(options.dir, "*.evil*"))
+                        foreach (var file in Directory.EnumerateFiles(options.dir, "*.evil*"))
                         {
                             encryptedFiles.Add(new EncryptedFile(file));
                         }
@@ -286,7 +327,7 @@ namespace decrypter_poc
                 catch (FormatException)
                 {
                     Console.WriteLine("Error: Unable to parse date");
-                   return 1;
+                    return 1;
                 }
 
                 //cryptFile = new EncryptedFile(filePath);
@@ -302,24 +343,22 @@ namespace decrypter_poc
                         Console.WriteLine("Running in multithreaded mode");
                     }
                 }
-
-            }   
+            }
             else
             {
-                var failedParse = (NotParsed<Options>)result;                
+                var failedParse = (NotParsed<Options>) result;
                 //Console.WriteLine(options.GetUsage());
                 return 2;
+            }
 
-            }            
-           
 
             //decryptedArray = tryDecrypt(cryptFile, startSeed, endSeed, multi);
 
-            foreach (EncryptedFile cryptFile in encryptedFiles)
+            foreach (var cryptFile in encryptedFiles)
             {
                 fileTicks = getTicks(startDate, cryptFile.file.FullName);
 
-                startSeed = (fileTicks - offset) - buffer;
+                startSeed = fileTicks - offset - buffer;
                 endSeed = fileTicks - offset;
 
                 if (startSeed == 0 || endSeed == 0)
@@ -336,7 +375,7 @@ namespace decrypter_poc
                     Console.WriteLine("Starting at seed count {0}", startSeed);
                 }
 
-                bool decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi);
+                var decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi);
 
 
                 if (decryptResult && cryptFile.seed != 0)
@@ -361,7 +400,7 @@ namespace decrypter_poc
                     Console.WriteLine("\nFailed to decrypt file!");
                     //return 0;
                 }
-                using (StreamWriter jfile = File.CreateText(outdir + @"\files.json"))
+                using (var jfile = File.CreateText(outdir + @"\files.json"))
                 {
                     JsonSerializer jserial = new JsonSerializer();
                     jserial.Serialize(jfile, encryptedFiles);
