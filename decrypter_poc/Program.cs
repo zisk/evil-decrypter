@@ -359,7 +359,7 @@ namespace decrypter_poc
                 fileTicks = getTicks(startDate, cryptFile.file.FullName);
 
                 startSeed = fileTicks - offset - buffer;
-                endSeed = fileTicks - offset;
+               endSeed = fileTicks - offset;
 
                 if (startSeed == 0 || endSeed == 0)
                 {
@@ -387,7 +387,7 @@ namespace decrypter_poc
 
                     try
                     {
-                        writeDecryptedFile(outdir, cryptFile.decryptedFilebyte);
+                        writeDecryptedFile(cryptFile.file.FullName, cryptFile.decryptedFilebyte);
                     }
                     catch (UnauthorizedAccessException)
                     {
