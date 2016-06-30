@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
-using Newtonsoft.Json;
 
 
 namespace decrypter_poc
@@ -399,24 +398,6 @@ namespace decrypter_poc
                 {
                     Console.WriteLine("\nFailed to decrypt file!");
                     //return 0;
-                }
-
-                if (verbose)
-                {
-                    Console.WriteLine("Writing results to JSON file");
-                }
-
-                try
-                {
-                    using (var jfile = File.CreateText(outdir + @"\files.json"))
-                    {
-                        JsonSerializer jserial = new JsonSerializer();
-                        jserial.Serialize(jfile, encryptedFiles);
-                    }
-                }
-                catch (IOException)
-                {
-                    Console.WriteLine("Unable to write to results file");
                 }
             }
             return 0;

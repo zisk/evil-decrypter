@@ -6,8 +6,6 @@ c:\users\rzisk\documents\visual studio 2015\Projects\decrypter_poc\decrypter_poc
 C:\Users\rzisk\Documents\Visual Studio 2015\Projects\decrypter_poc\decrypter_poc\obj\Debug\decrypter_poc.csprojResolveAssemblyReference.cache
 C:\Users\rzisk\Documents\Visual Studio 2015\Projects\decrypter_poc\decrypter_poc\bin\Debug\CommandLine.dll
 C:\Users\rzisk\Documents\Visual Studio 2015\Projects\decrypter_poc\decrypter_poc\bin\Debug\CommandLine.xml
-C:\Users\rzisk\Documents\Visual Studio 2015\Projects\decrypter_poc\decrypter_poc\bin\Debug\Newtonsoft.Json.dll
-C:\Users\rzisk\Documents\Visual Studio 2015\Projects\decrypter_poc\decrypter_poc\bin\Debug\Newtonsoft.Json.xml
 E:\Apps\decrypter-poc\decrypter_poc\bin\Debug\decrypter_poc.exe.config
 E:\Apps\decrypter-poc\decrypter_poc\obj\Debug\decrypter_poc.csprojResolveAssemblyReference.cache
 E:\Apps\decrypter-poc\decrypter_poc\bin\Debug\decrypter_poc.exe
