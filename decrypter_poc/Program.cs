@@ -400,10 +400,23 @@ namespace decrypter_poc
                     Console.WriteLine("\nFailed to decrypt file!");
                     //return 0;
                 }
-                using (var jfile = File.CreateText(outdir + @"\files.json"))
+
+                if (verbose)
                 {
-                    JsonSerializer jserial = new JsonSerializer();
-                    jserial.Serialize(jfile, encryptedFiles);
+                    Console.WriteLine("Writing results to JSON file");
+                }
+
+                try
+                {
+                    using (var jfile = File.CreateText(outdir + @"\files.json"))
+                    {
+                        JsonSerializer jserial = new JsonSerializer();
+                        jserial.Serialize(jfile, encryptedFiles);
+                    }
+                }
+                catch (IOException)
+                {
+                    Console.WriteLine("Unable to write to results file");
                 }
             }
             return 0;
