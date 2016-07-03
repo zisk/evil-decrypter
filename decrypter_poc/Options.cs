@@ -37,6 +37,8 @@ namespace decrypter_poc
         [Option("multi", HelpText = "Run multi threaded.", Default = false)]
         public bool multi { get; set; }
 
+        [Option("redis", HelpText = "Specify Redis server for caching.")]
+        public string redis { get; set; }
 
         //[HelpOption]
         //public string GetUsage()
