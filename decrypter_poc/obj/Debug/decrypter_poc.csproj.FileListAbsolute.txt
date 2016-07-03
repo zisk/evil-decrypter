@@ -16,3 +16,14 @@ E:\Apps\decrypter-poc\decrypter_poc\bin\Debug\CommandLine.xml
 E:\Apps\decrypter-poc\decrypter_poc\bin\Debug\Newtonsoft.Json.xml
 E:\Apps\decrypter-poc\decrypter_poc\obj\Debug\decrypter_poc.exe
 E:\Apps\decrypter-poc\decrypter_poc\obj\Debug\decrypter_poc.pdb
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\decrypter_poc.exe.config
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\decrypter_poc.exe
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\decrypter_poc.pdb
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\CommandLine.dll
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\StackExchange.Redis.dll
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\CommandLine.xml
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\StackExchange.Redis.pdb
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\bin\Debug\StackExchange.Redis.xml
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\obj\Debug\decrypter_poc.exe
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\obj\Debug\decrypter_poc.pdb
+C:\Users\ryan.ZISK\Source\Repos\evil-decrypter\decrypter_poc\obj\Debug\decrypter_poc.csprojResolveAssemblyReference.cache
