@@ -117,8 +117,8 @@ namespace decrypter_poc
                 Buffer.BlockCopy(passBytes, 0, combinedArray, 0, passBytes.Length);
                 Buffer.BlockCopy(blockBytes, 0, combinedArray, passBytes.Length, blockBytes.Length);
 
-                var passBytesString = Convert.ToBase64String(passBytes);
-                var blockString = Convert.ToBase64String(blockBytes);
+                //var passBytesString = Convert.ToBase64String(passBytes);
+                //var blockString = Convert.ToBase64String(blockBytes);
 
 
                 hashList.Add(new HashEntry(Convert.ToString(length), combinedArray));                
@@ -382,7 +382,18 @@ namespace decrypter_poc
                     if (redis != null)
                     {
                         var db = redis.GetDatabase();
-                        var cacheHit = pullCache(seed, redis);
+
+                        CalculatedSeed cacheHit = null;
+
+                        try
+                        {
+                            cacheHit = pullCache(seed, redis);
+                        }
+                        catch (TimeoutException)
+                        {
+                            cacheHit.hashValues = new Dictionary<RedisValue, RedisValue>();
+                        }
+
 
                         if (cacheHit.hashValues.Count != 0)
                         {
@@ -392,7 +403,15 @@ namespace decrypter_poc
                         {
                             var pwdHashes = createPwdHashes(seed);
                             var hashDict = pwdHashes.ToDictionary();
-                            db.HashSet(Convert.ToString(seed), pwdHashes);
+
+                            try
+                            {
+                                db.HashSet(Convert.ToString(seed), pwdHashes);
+                            }
+                            catch (TimeoutException)
+                            {
+                                
+                            }
                             seedResults.Add(new CalculatedSeed(seed, hashDict));
                         }
                     }
