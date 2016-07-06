@@ -7,7 +7,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
+<<<<<<< HEAD
 using System.Configuration;
+=======
+>>>>>>> redis
 using StackExchange.Redis;
 
 namespace decrypter_poc
@@ -141,17 +144,25 @@ namespace decrypter_poc
             }
         }
 
+<<<<<<< HEAD
         public static bool tryDecrypt(EncryptedFile file, int startSeed, int endseed, bool threading, ConnectionMultiplexer redis)
+=======
+        public static bool tryDecrypt(EncryptedFile file, bool threading, List<CalculatedSeed> seedResults)
+>>>>>>> redis
         {
             var stop = new Stopwatch();
 
             stop.Start();
 
+<<<<<<< HEAD
             var seedResults = new List<CalculatedSeed>();
 
             var db = redis.GetDatabase();
 
             for (var seed = endseed; seed > startSeed; seed--)
+=======
+            foreach (var seedHash in seedResults)
+>>>>>>> redis
             {
                 var cacheHit = pullCache(seed, redis);
 
@@ -273,6 +284,10 @@ namespace decrypter_poc
             int offset;
             string outdir;
             var verbose = false;
+<<<<<<< HEAD
+=======
+            ConnectionMultiplexer redis = null;           
+>>>>>>> redis
 
             var encryptedFiles = new List<EncryptedFile>();
 
@@ -351,6 +366,20 @@ namespace decrypter_poc
                         Console.WriteLine("Running in multithreaded mode");
                     }
                 }
+
+                if (options.redis != null)
+                {
+                    try
+                    {
+                        redis = ConnectionMultiplexer.Connect(options.redis);                       
+                    }
+                    catch (RedisConnectionException)
+                    {
+                        Console.WriteLine("Error: Unable to connect to Redis server. Disabling caching");
+                        redis = null;                        
+                    }
+                }
+
             }
             else
             {
@@ -358,13 +387,18 @@ namespace decrypter_poc
                 return 2;
             }
 
+<<<<<<< HEAD
             var redis = ConnectionMultiplexer.Connect(ConfigurationManager.AppSettings["redisServer"]);
 
+=======
+           
+>>>>>>> redis
             foreach (var cryptFile in encryptedFiles)
             {
-                fileTicks = getTicks(startDate, cryptFile.file.FullName);
 
-                startSeed = fileTicks - offset - buffer;
+               fileTicks = getTicks(startDate, cryptFile.file.FullName);
+
+               startSeed = fileTicks - offset - buffer;
                endSeed = fileTicks - offset;
 
                 if (startSeed == 0 || endSeed == 0)
@@ -381,7 +415,38 @@ namespace decrypter_poc
                     Console.WriteLine("Starting at seed count {0}", startSeed);
                 }
 
+<<<<<<< HEAD
                 var decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi, redis);
+=======
+                var seedResults = new List<CalculatedSeed>();
+                
+                for (var seed = endSeed; seed > startSeed; seed--)
+                {
+                    if (redis != null)
+                    {
+                        var db = redis.GetDatabase();
+                        var cacheHit = pullCache(seed, redis);
+
+                        if (cacheHit.hashValues.Count != 0)
+                        {
+                            seedResults.Add(cacheHit);
+                        }
+                        else
+                        {
+                            var pwdHashes = createPwdHashes(seed);
+                            var hashDict = pwdHashes.ToDictionary();
+                            db.HashSet(Convert.ToString(seed), pwdHashes);
+                            seedResults.Add(new CalculatedSeed(seed, hashDict));
+                        }
+                    }
+                    else
+                    {
+                        seedResults.Add(new CalculatedSeed(seed, createPwdHashes(seed).ToDictionary()));
+                    }
+                }
+
+                var decryptResult = tryDecrypt(cryptFile, multi, seedResults);
+>>>>>>> redis
 
 
                 if (decryptResult && cryptFile.seed != 0)
