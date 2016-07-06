@@ -7,10 +7,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
-<<<<<<< HEAD
-using System.Configuration;
-=======
->>>>>>> redis
 using StackExchange.Redis;
 
 namespace decrypter_poc
@@ -144,40 +140,12 @@ namespace decrypter_poc
             }
         }
 
-<<<<<<< HEAD
-        public static bool tryDecrypt(EncryptedFile file, int startSeed, int endseed, bool threading, ConnectionMultiplexer redis)
-=======
+
         public static bool tryDecrypt(EncryptedFile file, bool threading, List<CalculatedSeed> seedResults)
->>>>>>> redis
         {
             var stop = new Stopwatch();
 
-            stop.Start();
-
-<<<<<<< HEAD
-            var seedResults = new List<CalculatedSeed>();
-
-            var db = redis.GetDatabase();
-
-            for (var seed = endseed; seed > startSeed; seed--)
-=======
-            foreach (var seedHash in seedResults)
->>>>>>> redis
-            {
-                var cacheHit = pullCache(seed, redis);
-
-                if (cacheHit.hashValues.Count != 0)
-                {
-                    seedResults.Add(cacheHit);
-                }
-                else
-                {
-                    var pwdHashes = createPwdHashes(seed);
-                    var hashDict = pwdHashes.ToDictionary();
-                    db.HashSet(Convert.ToString(seed), pwdHashes);
-                    seedResults.Add(new CalculatedSeed(seed, hashDict));
-                }
-            }
+            stop.Start();           
 
             foreach (var seedHash in seedResults)
             {
@@ -284,10 +252,8 @@ namespace decrypter_poc
             int offset;
             string outdir;
             var verbose = false;
-<<<<<<< HEAD
-=======
             ConnectionMultiplexer redis = null;           
->>>>>>> redis
+
 
             var encryptedFiles = new List<EncryptedFile>();
 
@@ -386,13 +352,7 @@ namespace decrypter_poc
                 var failedParse = (NotParsed<Options>) result;                
                 return 2;
             }
-
-<<<<<<< HEAD
-            var redis = ConnectionMultiplexer.Connect(ConfigurationManager.AppSettings["redisServer"]);
-
-=======
            
->>>>>>> redis
             foreach (var cryptFile in encryptedFiles)
             {
 
@@ -415,9 +375,6 @@ namespace decrypter_poc
                     Console.WriteLine("Starting at seed count {0}", startSeed);
                 }
 
-<<<<<<< HEAD
-                var decryptResult = tryDecrypt(cryptFile, startSeed, endSeed, multi, redis);
-=======
                 var seedResults = new List<CalculatedSeed>();
                 
                 for (var seed = endSeed; seed > startSeed; seed--)
@@ -446,8 +403,6 @@ namespace decrypter_poc
                 }
 
                 var decryptResult = tryDecrypt(cryptFile, multi, seedResults);
->>>>>>> redis
-
 
                 if (decryptResult && cryptFile.seed != 0)
                 {
