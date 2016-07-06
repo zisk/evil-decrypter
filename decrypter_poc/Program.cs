@@ -138,6 +138,12 @@ namespace decrypter_poc
                 seed = seedValue;
                 hashValues = dict;
             }
+
+            public CalculatedSeed()
+            {
+                seed = 0;
+                hashValues = new Dictionary<RedisValue, RedisValue>();
+            }
         }
 
 
@@ -391,7 +397,7 @@ namespace decrypter_poc
                         }
                         catch (TimeoutException)
                         {
-                            cacheHit.hashValues = new Dictionary<RedisValue, RedisValue>();
+                            cacheHit = new CalculatedSeed();
                         }
 
 
