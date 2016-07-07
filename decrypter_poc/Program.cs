@@ -95,8 +95,18 @@ namespace decrypter_poc
         public static CalculatedSeed pullCache(int seed, ConnectionMultiplexer redis)
         {
             var db = redis.GetDatabase();
-            var pwdHash = db.HashGetAll(Convert.ToString(seed));
-            var seedResult = new CalculatedSeed(seed, pwdHash.ToDictionary()); 
+            var pwdHash = new HashEntry[1];
+            var seedResult = new CalculatedSeed();
+            try
+            {
+                pwdHash = db.HashGetAll(Convert.ToString(seed));
+                seedResult = new CalculatedSeed(seed, pwdHash.ToDictionary());
+            }
+            catch (RedisConnectionException)
+            {
+
+            }
+             
             return seedResult;
         }
 
@@ -280,7 +290,15 @@ namespace decrypter_poc
                 {
                     filePath = options.cryptedFilePath;
                     outdir = new FileInfo(filePath).Directory.ToString();
-                    encryptedFiles.Add(new EncryptedFile(options.cryptedFilePath));
+                    if (File.Exists(options.cryptedFilePath))
+                    {
+                        encryptedFiles.Add(new EncryptedFile(options.cryptedFilePath));
+                    }
+                    else
+                    {
+                        Console.WriteLine("Error: Input file not found");
+                        return 2;
+                    }
                 }
                 else if (options.dir != null)
                 {
@@ -325,8 +343,6 @@ namespace decrypter_poc
                     return 1;
                 }
 
-                //cryptFile = new EncryptedFile(filePath);
-
                 offset = options.offset;
                 buffer = options.buffer;
 
@@ -347,7 +363,7 @@ namespace decrypter_poc
                     }
                     catch (RedisConnectionException)
                     {
-                        Console.WriteLine("Error: Unable to connect to Redis server. Disabling caching");
+                        Console.WriteLine("Warning: Unable to connect to Redis server. Disabling caching");
                         redis = null;                        
                     }
                 }
