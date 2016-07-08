@@ -398,7 +398,9 @@ namespace decrypter_poc
                 }
 
                 var seedResults = new List<CalculatedSeed>();
-                
+                var decryptResult = false;
+                int loopCount = 0;
+
                 for (var seed = endSeed; seed > startSeed; seed--)
                 {
                     if (redis != null)
@@ -411,7 +413,7 @@ namespace decrypter_poc
                         {
                             cacheHit = pullCache(seed, redis);
                         }
-                        catch (TimeoutException)
+                        catch (Exception)
                         {
                             cacheHit = new CalculatedSeed();
                         }
@@ -430,9 +432,9 @@ namespace decrypter_poc
                             {
                                 db.HashSet(Convert.ToString(seed), pwdHashes);
                             }
-                            catch (TimeoutException)
+                            catch (Exception)
                             {
-                                
+                                Console.WriteLine("Warning: Unable to write to Redis");
                             }
                             seedResults.Add(new CalculatedSeed(seed, hashDict));
                         }
@@ -441,9 +443,28 @@ namespace decrypter_poc
                     {
                         seedResults.Add(new CalculatedSeed(seed, createPwdHashes(seed).ToDictionary()));
                     }
+
+                    //check every 10 loops so that large buffers don't suck up memory
+                    if (loopCount % 10 == 0)
+                    {
+                        decryptResult = decryptResult = tryDecrypt(cryptFile, multi, seedResults);
+                        if (decryptResult)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            if (verbose)
+                            {
+                                Console.Write("\rAttempt number: {0}", loopCount);
+                            }
+                            seedResults = new List<CalculatedSeed>();
+                        }
+                    }
+                    loopCount++;
                 }
 
-                var decryptResult = tryDecrypt(cryptFile, multi, seedResults);
+                decryptResult = tryDecrypt(cryptFile, multi, seedResults);
 
                 if (decryptResult && cryptFile.seed != 0)
                 {
