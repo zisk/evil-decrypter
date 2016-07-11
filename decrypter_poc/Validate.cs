@@ -17,6 +17,9 @@ namespace decrypter_poc
         // officex header bytes
         static byte[] officexHeader = new byte[5] { 80, 75, 3, 4, 20 };
 
+        // old office files
+        static byte[] officeHeader = new byte[] { 208, 207, 17, 224 };
+
         static byte[] pdfHeader = new byte[] {37, 80, 68, 70, 45 };
 
 
@@ -32,6 +35,11 @@ namespace decrypter_poc
                 case "pptx":
                 case "vdsx":
                     return confirmValid(fileDecrypt, officexHeader);
+                case "xls":
+                case "doc":
+                case "ppt":
+                case "msg":
+                    return confirmValid(fileDecrypt, officeHeader);
                 case "png":
                     return confirmValid(fileDecrypt, PNG_MAGIC_BYTES);
                 case "pdf":
