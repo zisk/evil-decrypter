@@ -13,7 +13,9 @@ namespace decrypter_poc
 {
     internal class Program
     {
+        // ransomeware generated a "random" password between 30 and 50 characters
         private static readonly IEnumerable<int> pwLengths = Enumerable.Range(30, 20);
+        // static salt was used for all key generation
         private static readonly byte[] saltBytes = {1, 2, 3, 4, 5, 6, 7, 8};
 
 
@@ -30,6 +32,7 @@ namespace decrypter_poc
 
             //};
 
+            // AesCryptoProvidor proved to be faster than the AesManaged functions
             using (var aes = new AesCryptoServiceProvider
             {
                 KeySize = 256,
@@ -73,7 +76,9 @@ namespace decrypter_poc
             }
         }
         
-
+        /* same function from ransomeware, modified to take a static seed value.
+         * This will produce predictable passwords given the same seed and length
+         */
         public static string GetPass(int x, int seed)
         {
             var str = "";
@@ -110,12 +115,17 @@ namespace decrypter_poc
             return seedResult;
         }
 
+        /* Takes input seed and generates passwords of lengths between 20-50 characters
+         * These passwords are used to generate a key and an initialization vector, which are each stored as bytes
+         * These values can be stored in Redis as byte arrays so that they only ever have to be calculated once
+         */
         public static HashEntry[] createPwdHashes(int seed)
         {
             var hashList = new List<HashEntry>();
 
             foreach (int length in pwLengths)
             {
+                // ransomeware actually used the SHA256 value of the password, not the actual generated password
                 var pass = genSha(GetPass(length, seed));
                 var passDeriveBytes = new Rfc2898DeriveBytes(pass, saltBytes, 1000);
 
@@ -127,16 +137,13 @@ namespace decrypter_poc
                 Buffer.BlockCopy(passBytes, 0, combinedArray, 0, passBytes.Length);
                 Buffer.BlockCopy(blockBytes, 0, combinedArray, passBytes.Length, blockBytes.Length);
 
-                //var passBytesString = Convert.ToBase64String(passBytes);
-                //var blockString = Convert.ToBase64String(blockBytes);
-
-
                 hashList.Add(new HashEntry(Convert.ToString(length), combinedArray));                
             }
            
             return hashList.ToArray();
         }
 
+        // seed and directory of passwords for easy storage and indexing
         public class CalculatedSeed
         {
             public int seed { get; set; }
@@ -169,9 +176,6 @@ namespace decrypter_poc
                 {
                     Parallel.ForEach(pwLengths, (pwlength, state) =>
                     {
-                        //var pass = GetPass(pwlength, seed);
-                        // orginal ransomware appears to use a hash of the password rather than the real password
-                        //var passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
                         var decrypted = AES_UM_Decrypt(file.cryptedFilebytes, seedHash.hashValues[Convert.ToString(pwlength)]);
 
                         if (decrypted != null)
@@ -199,9 +203,6 @@ namespace decrypter_poc
                 {
                     foreach (var pwlength in pwLengths)
                     {
-                        //var pass = GetPass(pwlength, seed);
-                        // orginal ransomware appears to use a hash of the password rather than the real password
-                        //var passBytes = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(pass));
                         var decrypted = AES_UM_Decrypt(file.cryptedFilebytes, seedHash.hashValues[Convert.ToString(pwlength)]);
 
                         if (decrypted != null)
@@ -275,7 +276,7 @@ namespace decrypter_poc
 
             var result = Parser.Default.ParseArguments<Options>(args);
 
-
+            // attempt to parse commandline options, write help if failed
             if (result.Tag == ParserResultType.Parsed)
             {
                 var parsed = (Parsed<Options>) result;
@@ -286,6 +287,7 @@ namespace decrypter_poc
                     verbose = true;
                 }
 
+                // load either single file or directory
                 if (options.cryptedFilePath != null)
                 {
                     filePath = options.cryptedFilePath;
@@ -374,7 +376,8 @@ namespace decrypter_poc
                 var failedParse = (NotParsed<Options>) result;                
                 return 2;
             }
-           
+            
+            // loop through file(s) and attempt decryption           
             foreach (var cryptFile in encryptedFiles)
             {
 
@@ -389,6 +392,7 @@ namespace decrypter_poc
                     break;
                 }
 
+                // load encrypted file into memory
                 cryptFile.loadBytes();
 
                 if (verbose)
@@ -409,6 +413,7 @@ namespace decrypter_poc
 
                         CalculatedSeed cacheHit = null;
 
+                        // attempt to pull from redis cache
                         try
                         {
                             cacheHit = pullCache(seed, redis);
@@ -418,7 +423,7 @@ namespace decrypter_poc
                             cacheHit = new CalculatedSeed();
                         }
 
-
+                        // check if hash was pulled, otherwise generate seed results in place, then attempt to add to redis
                         if (cacheHit.hashValues.Count != 0)
                         {
                             seedResults.Add(cacheHit);
@@ -439,12 +444,13 @@ namespace decrypter_poc
                             seedResults.Add(new CalculatedSeed(seed, hashDict));
                         }
                     }
+                    // if redis not enabled, just generate seed values and store in memory
                     else
                     {
                         seedResults.Add(new CalculatedSeed(seed, createPwdHashes(seed).ToDictionary()));
                     }
 
-                    //check every 10 loops so that large buffers don't suck up memory
+                    // check every 10 loops so that large buffers don't suck up memory
                     if (loopCount % 10 == 0)
                     {
                         decryptResult = decryptResult = tryDecrypt(cryptFile, multi, seedResults);
@@ -491,3 +497,4 @@ namespace decrypter_poc
         }
     }
 }
+ 
