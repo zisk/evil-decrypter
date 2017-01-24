@@ -40,6 +40,9 @@ namespace decrypter_poc
         [Option("redis", HelpText = "Specify Redis server for caching.")]
         public string redis { get; set; }
 
+        [Option("del", HelpText = "Delete file if successfully decrypted")]
+        public bool delete { get; set; }
+
         //[HelpOption]
         //public string GetUsage()
         //{

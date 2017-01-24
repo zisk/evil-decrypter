@@ -34,7 +34,14 @@ namespace decrypter_poc
                 case "docx":
                 case "pptx":
                 case "vdsx":
-                    return confirmValid(fileDecrypt, officexHeader);
+                    if (confirmValid(fileDecrypt, officexHeader) || confirmValid(fileDecrypt, officeHeader))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 case "xls":
                 case "doc":
                 case "ppt":

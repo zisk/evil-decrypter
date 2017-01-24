@@ -269,6 +269,7 @@ namespace decrypter_poc
             int offset;
             string outdir;
             var verbose = false;
+            var delete = false;
             ConnectionMultiplexer redis = null;           
 
 
@@ -355,6 +356,11 @@ namespace decrypter_poc
                     {
                         Console.WriteLine("Running in multithreaded mode");
                     }
+                }
+
+                if (options.delete)
+                {
+                    delete = options.delete;
                 }
 
                 if (options.redis != null)
@@ -482,6 +488,10 @@ namespace decrypter_poc
                     try
                     {
                         writeDecryptedFile(cryptFile.file.FullName, cryptFile.decryptedFilebyte);
+                        if (delete)
+                        {
+                            File.Delete(cryptFile.file.FullName);
+                        }
                     }
                     catch (UnauthorizedAccessException)
                     {
