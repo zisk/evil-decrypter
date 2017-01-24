@@ -2,4 +2,4 @@ before_script:
   - '"C:\nuget\nuget.exe" restore'
 
 build:
-  script: '"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe" /nologo /t:Build /p:Configuration=Release'
+  script: '"C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe" /nologo /t:Build /p:Configuration=Release'
